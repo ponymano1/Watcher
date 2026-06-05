@@ -1,4 +1,4 @@
 #[derive(Debug, Clone)]
-pub struct State {
+pub struct AppState {
     pub app_name: String,
 }

@@ -16,8 +16,8 @@ use crate::{
 pub fn create_routes(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health))
-        .route("/watch-address", post(create_watch_address))
+        .route("/watch-addresses", post(create_watch_address))
         .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::new().permissive())
+        .layer(CorsLayer::permissive())
         .with_state(state)
 }
