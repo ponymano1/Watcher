@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use serde::{Serialize};
+use serde::Serialize;
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct WatchAddress {

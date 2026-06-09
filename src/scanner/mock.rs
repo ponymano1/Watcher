@@ -1,8 +1,8 @@
+use crate::error::AppError;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::select;
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
-use crate::error::AppError;
 
 #[derive(Debug, Clone)]
 pub struct MockNewTransactionEvent {
@@ -24,14 +24,17 @@ pub async fn fetch_latest_block_mock() -> u64 {
     timestamp % 500
 }
 
-pub async fn call_rpc_mock_with_timeout() -> Result<u64,AppError> {
-    let result = tokio::time::timeout(
-        Duration::from_secs(3),
-        fetch_latest_block_mock()).await.map_err(|_| AppError::RPC("timeout".to_string()))?;
+pub async fn call_rpc_mock_with_timeout() -> Result<u64, AppError> {
+    let result = tokio::time::timeout(Duration::from_secs(3), fetch_latest_block_mock())
+        .await
+        .map_err(|_| AppError::RPC("timeout".to_string()))?;
     Ok(result)
 }
 
-pub async fn run_scanner_mock(tx_events: broadcast::Sender<MockNewTransactionEvent>,  cancel: CancellationToken) {
+pub async fn run_scanner_mock(
+    tx_events: broadcast::Sender<MockNewTransactionEvent>,
+    cancel: CancellationToken,
+) {
     let mut interval = tokio::time::interval(Duration::from_secs(1));
     let mut counter = 0u64;
     loop {
@@ -50,18 +53,16 @@ pub async fn run_scanner_mock(tx_events: broadcast::Sender<MockNewTransactionEve
                             hash: format!("0xmocktx{}", counter),
                             address: "0x1111111111111111111111111111111111111111".to_string(),
                         };
-        
+
                         let receiver_count = tx_events.send(event).unwrap_or(0);
-        
+
                     }
                     Err(e) => {
                         println!("Error: {}", e);
                     }
-                }                
+                }
             }
         }
-    
-
     }
 }
 
@@ -107,5 +108,4 @@ mod tests {
         assert!(!events.is_empty());
         println!("Events: {:?}", events);
     }
-
 }

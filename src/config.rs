@@ -11,10 +11,9 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> Self {
-        let database_url = std::env::var("DATABASE_URL")
-            .expect("DATABASE_URL must be set");
-        let server_address = std::env::var("SERVER_ADDRESS")
-            .unwrap_or_else(|_| "0.0.0.0:3000".to_string());
+        let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let server_address =
+            std::env::var("SERVER_ADDRESS").unwrap_or_else(|_| "0.0.0.0:3000".to_string());
         let chain_id = std::env::var("CHAIN_ID")
             .ok()
             .and_then(|id| id.parse::<i64>().ok())
@@ -27,12 +26,13 @@ impl Config {
             .ok()
             .and_then(|confirmations| confirmations.parse::<u64>().ok())
             .unwrap_or(0);
-        
-        Self { 
-            database_url, 
-            server_address, 
-            chain_id, 
-            scan_interval: Duration::from_secs(scan_interval_secs), 
-            confirmations }
+
+        Self {
+            database_url,
+            server_address,
+            chain_id,
+            scan_interval: Duration::from_secs(scan_interval_secs),
+            confirmations,
+        }
     }
 }

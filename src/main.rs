@@ -1,18 +1,19 @@
-mod error;
-mod scanner;
-mod utils;
-mod state;
 mod api;
+mod chain;
 mod config;
 mod db;
+mod error;
+mod scanner;
+mod state;
+mod utils;
 
 use api::routes::create_routes;
-use state::AppState;
-use tokio::net::TcpListener;
 use config::Config;
 use db::repository::ping_db;
-use sqlx::postgres::PgPoolOptions;
 use dotenvy::dotenv;
+use sqlx::postgres::PgPoolOptions;
+use state::AppState;
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -24,11 +25,11 @@ async fn main() -> Result<(), anyhow::Error> {
         .connect(&config.database_url)
         .await?;
 
-
     ping_db(&pool).await?;
 
     let state = AppState {
         app_name: "hahaha-coming".to_string(),
+        pool: pool.clone(),
     };
 
     let app = create_routes(state);

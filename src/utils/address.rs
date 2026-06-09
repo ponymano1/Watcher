@@ -27,7 +27,7 @@ pub fn is_valid_eth_address(address: &str) -> bool {
     let Some(rest) = address.strip_prefix("0x") else {
         return false;
     };
-    
+
     rest.len() == 40 && rest.chars().all(|c| c.is_ascii_hexdigit())
 }
 
@@ -44,7 +44,9 @@ pub fn parse_chain_id(input: &str) -> Result<u64, AppError> {
 }
 
 pub fn parse_block_number(input: &str) -> Result<u64, AppError> {
-    input.parse::<u64>().map_err(|_| AppError::InvalidBlockNumber)
+    input
+        .parse::<u64>()
+        .map_err(|_| AppError::InvalidBlockNumber)
 }
 pub fn count_by_address(addresses: Vec<String>) -> HashMap<String, usize> {
     let mut counts = HashMap::new();
@@ -53,7 +55,6 @@ pub fn count_by_address(addresses: Vec<String>) -> HashMap<String, usize> {
         *counts.entry(normalized_addr).or_insert(0) += 1;
     }
     counts
-
 }
 
 #[cfg(test)]
@@ -64,7 +65,10 @@ mod tests {
     fn test_normalize_address() {
         let input = "  0xABCDEFabcdefABCDEFabcdefABCDEFabcdefABCD";
 
-        assert_eq!(normalize_address(input), "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd");
+        assert_eq!(
+            normalize_address(input),
+            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"
+        );
     }
 
     #[test]
@@ -89,7 +93,7 @@ mod tests {
         assert!(!is_valid_eth_address(
             "0xzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
         ));
-    }    
+    }
 
     #[test]
     fn test_count_by_address() {
@@ -97,15 +101,23 @@ mod tests {
             "0x1111111111111111111111111111111111111111".to_string(),
             "0x3333333333333333333333333333333333333333".to_string(),
             "0x1111111111111111111111111111111111111111".to_string(),
-            "0x2222222222222222222222222222222222222222".to_string(),  
+            "0x2222222222222222222222222222222222222222".to_string(),
             "0x3333333333333333333333333333333333333333".to_string(),
             "0x3333333333333333333333333333333333333333".to_string(),
-
         ];
         let counts = count_by_address(addresses);
-        assert_eq!(counts.get("0x1111111111111111111111111111111111111111"), Some(&2));
-        assert_eq!(counts.get("0x2222222222222222222222222222222222222222"), Some(&1));
-        assert_eq!(counts.get("0x3333333333333333333333333333333333333333"), Some(&3));
+        assert_eq!(
+            counts.get("0x1111111111111111111111111111111111111111"),
+            Some(&2)
+        );
+        assert_eq!(
+            counts.get("0x2222222222222222222222222222222222222222"),
+            Some(&1)
+        );
+        assert_eq!(
+            counts.get("0x3333333333333333333333333333333333333333"),
+            Some(&3)
+        );
     }
 
     #[test]
@@ -118,7 +130,10 @@ mod tests {
     fn test_parse_chain_id_err() {
         let input = "12312a";
         assert!(parse_chain_id(input).is_err());
-        assert_eq!(parse_chain_id(input).unwrap_err(), AppError::InvalidChainId);
+        assert!(matches!(
+            parse_chain_id(input).unwrap_err(),
+            AppError::InvalidChainId
+        ));
     }
 
     #[test]
@@ -131,8 +146,9 @@ mod tests {
     fn test_parse_block_number_err() {
         let input = "15a";
         assert!(parse_block_number(input).is_err());
-        assert_eq!(parse_block_number(input).unwrap_err(), AppError::InvalidBlockNumber);
+        assert!(matches!(
+            parse_block_number(input).unwrap_err(),
+            AppError::InvalidBlockNumber
+        ));
     }
-
 }
-    
