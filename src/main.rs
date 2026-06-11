@@ -7,19 +7,24 @@ mod scanner;
 mod state;
 mod utils;
 
-use api::routes::create_routes;
+use std::sync::Arc;
+
+use api::routes::create_router;
+use chain::mock::MockChainClient;
 use config::Config;
 use db::repository::ping_db;
 use dotenvy::dotenv;
+use scanner::service::Scanner;
 use sqlx::postgres::PgPoolOptions;
 use state::AppState;
-use tokio::net::TcpListener;
 
 #[tokio::main]
-async fn main() -> Result<(), anyhow::Error> {
+async fn main() -> anyhow::Result<()> {
     dotenv().ok();
     tracing_subscriber::fmt::init();
+
     let config = Config::from_env();
+
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&config.database_url)
@@ -27,15 +32,33 @@ async fn main() -> Result<(), anyhow::Error> {
 
     ping_db(&pool).await?;
 
+    let (tx_events, _rx) = tokio::sync::broadcast::channel(100);
+
     let state = AppState {
-        app_name: "hahaha-coming".to_string(),
         pool: pool.clone(),
+        tx_events: tx_events.clone(),
     };
 
-    let app = create_routes(state);
+    let scanner = Scanner {
+        pool: pool.clone(),
+        chain_id: config.chain_id,
+        client: Arc::new(MockChainClient),
+        scan_interval: config.scan_interval,
+        confirmations: config.confirmations,
+        tx_events: tx_events.clone(),
+    };
 
-    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    tracing::info!("listening on {}", listener.local_addr().unwrap());
+    tokio::spawn(async move {
+        scanner.run().await;
+    });
+
+    let app = create_router(state);
+
+    let listener = tokio::net::TcpListener::bind(&config.server_address).await?;
+
+    tracing::info!("server listening on {}", config.server_address);
+
     axum::serve(listener, app).await?;
+
     Ok(())
 }

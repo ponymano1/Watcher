@@ -1,9 +1,15 @@
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{
+        ws::{Message, WebSocket, WebSocketUpgrade},
+        Path, 
+        Query, 
+        State},
+    response::IntoResponse,
 };
 
 use serde::Deserialize;
+
 
 use crate::{
     api::dto::{CreateWatchAddressRequest, WatchAddressResponse},
@@ -58,4 +64,25 @@ pub async fn get_transaction_by_address(
     let address = validate_address(&address)?;
     let transactions = list_transactions_by_address(&state.pool, query.chain_id, &address).await?;
     Ok(Json(transactions))
+}
+
+pub async fn ws_transactions(
+    ws: WebSocketUpgrade,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    ws.on_upgrade(move |socket| handle_ws(socket, state))
+}
+
+async fn handle_ws(mut socket: WebSocket, state: AppState) {
+    let mut rx = state.tx_events.subscribe();
+
+    while let Ok(event) = rx.recv().await {
+        let Ok(text) = serde_json::to_string(&event) else {
+            continue;
+        };
+
+        if socket.send(Message::Text(text.into())).await.is_err() {
+            break;
+        }
+    }
 }
